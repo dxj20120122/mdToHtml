@@ -130,60 +130,70 @@ function example() {
                         <button class="toolbar-btn" onclick="insertTemplate('advanced')">高级示例</button>
                         <button class="toolbar-btn" onclick="clearEditor()">清空</button>
                     </div>
-                    <textarea class="md-to-html" id="markdown-editor" placeholder="在这里输入Markdown文本...">## 欢迎使用 Markdown to HTML 转换器
+                    <textarea class="md-to-html" id="markdown-editor" placeholder="在这里输入Markdown文本..."># Markdown to HTML 转换组件
 
-这是一个功能强大的Markdown编辑器，支持实时预览和丰富的Markdown语法。
+这是一个轻量级的Markdown转HTML组件，可以将Markdown文本实时转换为HTML。该组件支持大多数常用的Markdown语法，并且可以作为Web Component使用。
 
-### 基础语法
+## 特性
 
-#### 1. 文本格式化
-**粗体文本** 和 *斜体文本*
+- 支持基本的Markdown语法（标题、列表、链接、图片等）
+- 支持代码块高亮
+- 支持表格
+- 支持任务列表
+- 实时预览
+- 可作为Web Component使用
+- 轻量级，无需额外依赖
+- 易于集成到任何网页中
+
+## Markdown语法支持
+
+### 1. 标题
+# 一级标题
+## 二级标题
+### 三级标题
+#### 四级标题
+##### 五级标题
+###### 六级标题
+
+### 2. 文本格式化
+**粗体文本**
+*斜体文本*
 ***粗斜体文本***
 ~~删除线文本~~
+`行内代码`
 
-#### 2. 列表
-- 无序列表项 1
-  - 子列表项 A
-  - 子列表项 B
-- 无序列表项 2
+### 3. 列表
+- 无序列表项
+  - 子列表项
+  - 子列表项
 
-1. 有序列表项 1
-2. 有序列表项 2
-   1. 子列表项 A
-   2. 子列表项 B
+1. 有序列表项
+2. 有序列表项
+   1. 子列表项
+   2. 子列表项
 
-#### 3. 任务列表
-- [x] 已完成的任务
-- [ ] 待完成的任务
-- [ ] 计划中的任务
+- [x] 已完成任务
+- [ ] 待完成任务
 
-### 高级功能
+### 4. 链接和图片
+[链接文本](https://example.com)
+![图片描述](https://via.placeholder.com/150)
 
-#### 1. 代码块
+### 5. 代码块
 ```javascript
-// 示例代码
-function greet(name) {
-    console.log(`Hello, ${name}!`);
+function example() {
+    return "Hello World!";
 }
-
-greet('World');
 ```
 
-#### 2. 表格
-| 功能 | 描述 | 支持情况 |
-|------|------|----------|
-| 基础语法 | 标题、列表、链接等 | ✓ |
-| 代码高亮 | 支持多种语言 | ✓ |
-| 实时预览 | 即时渲染 | ✓ |
+### 6. 表格
+| 列1 | 列2 |
+|-----|------|
+| 内容1 | 内容2 |
 
-#### 3. 引用
-> 这是一段引用文本
->> 这是嵌套引用
-
-#### 4. 链接和图片
-[访问项目主页](https://github.com/dxj20120122/mdToHtml)
-
-![示例图片](https://via.placeholder.com/150)</textarea>
+### 7. 引用
+> 引用文本
+>> 嵌套引用</textarea>
                 </div>
                 <div class="preview" id="preview-container">
                     <div class="preview-header">
