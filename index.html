@@ -201,41 +201,112 @@ greet('World');
     <section id="usage" class="section">
         <div class="section-container">
             <h2>使用教程</h2>
+            
             <div class="usage-examples">
-                <h3>1. 直接引用</h3>
+                <h3>1. 基本使用</h3>
+                <p>组件提供了多种初始化方式，选择最适合你的方式：</p>
+                
                 <div class="code-block">
-                    <pre><code>&lt;script src="https://dxj20120122.github.io/mdToHtml/md-to-html.js"&gt;&lt;/script&gt;</code></pre>
+                    <pre><code><!-- 使用content属性 -->
+<md-to-html content="# Hello World"></md-to-html>
+
+<!-- 使用markdown或md属性 -->
+<md-to-html markdown="# Hello World"></md-to-html>
+<md-to-html md="# Hello World"></md-to-html>
+
+<!-- 使用innerHTML方式 -->
+<md-to-html>
+    # Hello World
+</md-to-html></code></pre>
                 </div>
 
-                <h3>2. 基本使用</h3>
+                <h3>2. 实时预览功能</h3>
+                <p>创建一个实时预览的Markdown编辑器：</p>
+                
                 <div class="code-block">
-                    <pre><code>&lt;!DOCTYPE html&gt;
-&lt;html&gt;
-&lt;head&gt;
-    &lt;script src="https://dxj20120122.github.io/mdToHtml/md-to-html.js"&gt;&lt;/script&gt;
-&lt;/head&gt;
-&lt;body&gt;
-    &lt;md-to-html content="# Hello World"&gt;&lt;/md-to-html&gt;
-&lt;/body&gt;
-&lt;/html&gt;</code></pre>
-                </div>
+                    <pre><code><textarea id="editor" placeholder="输入Markdown文本..."></textarea>
+<md-to-html id="preview"></md-to-html>
 
-                <h3>3. 动态内容</h3>
-                <div class="code-block">
-                    <pre><code>&lt;textarea id="editor"&gt;&lt;/textarea&gt;
-&lt;md-to-html id="preview"&gt;&lt;/md-to-html&gt;
-
-&lt;script&gt;
+<script>
 const editor = document.getElementById('editor');
 const preview = document.getElementById('preview');
 
 editor.addEventListener('input', () => {
     preview.setAttribute('content', editor.value);
 });
-&lt;/script&gt;</code></pre>
+</script></code></pre>
+                </div>
+
+                <h3>3. JavaScript API</h3>
+                <p>组件提供了丰富的API接口：</p>
+                
+                <div class="code-block">
+                    <pre><code>const md = document.getElementById('markdown');
+
+// 设置Markdown内容
+md.setContent('# Hello World');
+md.setMarkdown('# Hello World');  // 同上
+md.render('# Hello World');        // 同上
+
+// 获取HTML内容
+const html = md.getHTML();
+
+// 监听渲染完成事件
+md.addEventListener('rendered', (event) => {
+    console.log('Markdown已渲染完成');
+});</code></pre>
+                </div>
+
+                <h3>4. 自定义样式</h3>
+                <p>你可以通过CSS自定义组件的样式：</p>
+                
+                <div class="code-block">
+                    <pre><code>md-to-html {
+    /* 自定义容器样式 */
+    display: block;
+    padding: 1rem;
+}
+
+md-to-html h1 {
+    /* 自定义标题样式 */
+    color: #2c3e50;
+    border-bottom: 2px solid #eee;
+}
+
+md-to-html pre {
+    /* 自定义代码块样式 */
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 4px;
+}</code></pre>
+                </div>
+
+                <h3>5. 最佳实践</h3>
+                <p>以下是一些使用组件的最佳实践：</p>
+                
+                <div class="code-block">
+                    <pre><code>// 1. 动态加载内容
+async function loadMarkdown() {
+    const response = await fetch('content.md');
+    const markdown = await response.text();
+    document.querySelector('md-to-html').setContent(markdown);
+}
+
+// 2. 与表单集成
+<form onsubmit="handleSubmit(event)">
+    <textarea id="editor" required></textarea>
+    <md-to-html id="preview"></md-to-html>
+    <button type="submit">提交</button>
+</form></code></pre>
                 </div>
             </div>
         </div>
     </section>
+
+    <footer class="footer">
+        <div class="footer-container">
+            <p>© 2025 Markdown to HTML 组件. MIT License.</p>
+        </div>
+    </footer>
 </body>
 </html>
