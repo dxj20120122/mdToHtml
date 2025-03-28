@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown to HTML 组件</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="md-to-html.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="#" class="logo">Markdown to HTML</a>
+            <div class="nav-links">
+                <a href="#features">特性</a>
+                <a href="#demo">演示</a>
+                <a href="#usage">使用教程</a>
+                <a href="https://github.com/dxj20120122/mdToHtml" target="_blank">GitHub</a>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <h1>Markdown to HTML 转换组件</h1>
+        <p>一个轻量级的Web组件，让您轻松实现Markdown到HTML的实时转换</p>
+    </section>
+
+    <section id="features" class="section">
+        <div class="section-container">
+            <h2>特性介绍</h2>
+            <div class="features">
+                <div class="feature-card">
+                    <h3>完整的Markdown支持</h3>
+                    <p>支持标题、列表、链接、图片、代码块等常用Markdown语法</p>
+                </div>
+                <div class="feature-card">
+                    <h3>实时预览</h3>
+                    <p>输入即时转换，所见即所得的编辑体验</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Web Component</h3>
+                    <p>以Web Component形式提供，易于集成到任何网页中</p>
+                </div>
+                <div class="feature-card">
+                    <h3>轻量级</h3>
+                    <p>无需依赖，体积小巧，加载迅速</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="demo" class="section">
+        <div class="section-container">
+            <h2>在线演示</h2>
+            <div class="demo-container">
+                <div class="editor">
+                    <textarea class="md-to-html" placeholder="在这里输入Markdown文本...">## 欢迎使用 Markdown to HTML 转换器
+
+这是一个简单的示例，展示了一些基本的Markdown语法：
+
+### 列表示例
+- 无序列表项 1
+- 无序列表项 2
+  - 子列表项
+
+### 任务列表
+- [x] 已完成的任务
+- [ ] 未完成的任务
+
+### 代码示例
+```javascript
+console.log('Hello, World!');
+```
+
+### 表格示例
+| 表头1 | 表头2 |
+|-------|--------|
+| 内容1 | 内容2 |
+
+### 其他语法
+**粗体文本** 和 *斜体文本*
+
+> 这是一段引用文本</textarea>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="usage" class="section">
+        <div class="section-container">
+            <h2>使用教程</h2>
+            <div class="usage-examples">
+                <h3>1. 直接引用</h3>
+                <div class="code-block">
+                    <pre><code>&lt;script src="https://dxj20120122.github.io/mdToHtml/md-to-html.js"&gt;&lt;/script&gt;</code></pre>
+                </div>
+
+                <h3>2. 基本使用</h3>
+                <div class="code-block">
+                    <pre><code>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+    &lt;script src="https://dxj20120122.github.io/mdToHtml/md-to-html.js"&gt;&lt;/script&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;md-to-html content="# Hello World"&gt;&lt;/md-to-html&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+                </div>
+
+                <h3>3. 动态内容</h3>
+                <div class="code-block">
+                    <pre><code>&lt;textarea id="editor"&gt;&lt;/textarea&gt;
+&lt;md-to-html id="preview"&gt;&lt;/md-to-html&gt;
+
+&lt;script&gt;
+const editor = document.getElementById('editor');
+const preview = document.getElementById('preview');
+
+editor.addEventListener('input', () => {
+    preview.setAttribute('content', editor.value);
+});
+&lt;/script&gt;</code></pre>
+                </div>
+            </div>
+        </div>
+    </section>
+</body>
+</html>
