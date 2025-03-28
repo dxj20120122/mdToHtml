@@ -59,6 +59,29 @@ function convertMarkdownToHtml(markdown) {
     markdown = markdown.replace(/~~(.+?)~~/g, '<del>$1</del>');
     markdown = markdown.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
     markdown = markdown.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    // 支持表格标题行
+    markdown = markdown.replace(/^\|([:-]+\|)+\s*$/gm, (match) => {
+        const cells = match.split('|').slice(1, -1).map(cell => cell.trim());
+        return `<tr>${cells.map(cell => {
+            const align = cell.startsWith(':') && cell.endsWith(':') ? 'center'
+                       : cell.endsWith(':') ? 'right'
+                       : cell.startsWith(':') ? 'left'
+                       : '';
+            return `<th style="text-align: ${align}">${'　'}</th>`;
+        }).join('')}</tr>`;
+    });
+
+    // 支持音频和视频标签
+    markdown = markdown.replace(/!\[audio\]\(([^\)]+)\)/g, '<audio controls src="$1"></audio>');
+    markdown = markdown.replace(/!\[video\]\(([^\)]+)\)/g, '<video controls src="$1"></video>');
+
+    // 支持键盘按键
+    markdown = markdown.replace(/<kbd>([^<]+)<\/kbd>/g, '<kbd>$1</kbd>');
+
+    // 支持上标和下标
+    markdown = markdown.replace(/\^([^\^\s]+)\^/g, '<sup>$1</sup>');
+    markdown = markdown.replace(/~([^~\s]+)~/g, '<sub>$1</sub>');
+
     markdown = markdown.replace(/^(?!<[htupoia]).+$/gm, '<p>$&</p>');
     markdown = markdown.replace(/\n\s*\n/g, '\n');
     markdown = markdown.replace(/__HTML_TAG_(\d+)__/g, (match, index) => htmlTags[parseInt(index)]);
@@ -67,6 +90,58 @@ function convertMarkdownToHtml(markdown) {
 }
 
 const markdownStyles = `
+    /* 基础样式 */
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 1em 0;
+    }
+    th, td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+    }
+    th {
+        background-color: #f6f8fa;
+    }
+    tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+
+    /* 音频和视频样式 */
+    audio, video {
+        width: 100%;
+        max-width: 600px;
+        margin: 1em 0;
+        border-radius: 4px;
+    }
+
+    /* 键盘按键样式 */
+    kbd {
+        background-color: #f8f9fa;
+        border: 1px solid #d1d5da;
+        border-radius: 3px;
+        box-shadow: inset 0 -1px 0 #d1d5da;
+        color: #444d56;
+        display: inline-block;
+        font-size: 0.9em;
+        line-height: 1;
+        padding: 3px 5px;
+    }
+
+    /* 上标和下标样式 */
+    sup, sub {
+        font-size: 0.75em;
+        line-height: 0;
+        position: relative;
+        vertical-align: baseline;
+    }
+    sup {
+        top: -0.5em;
+    }
+    sub {
+        bottom: -0.25em;
+    }
     :host {
         display: block;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
