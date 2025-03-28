@@ -21,16 +21,36 @@
 
 ### 基本使用
 
+组件支持多种初始化方式：
+
+1. 使用content属性：
 ```html
-<!DOCTYPE html>
-<html>
-<head>
-    <script src="https://dxj20120122.github.io/mdToHtml/md-to-html.js"></script>
-</head>
-<body>
-    <md-to-html content="# Hello World"></md-to-html>
-</body>
-</html>
+<md-to-html content="# Hello World"></md-to-html>
+```
+
+2. 使用markdown或md属性：
+```html
+<md-to-html markdown="# Hello World"></md-to-html>
+<md-to-html md="# Hello World"></md-to-html>
+```
+
+3. 使用innerHTML方式：
+```html
+<md-to-html>
+    # Hello World
+</md-to-html>
+```
+
+4. 使用实例方法：
+```html
+<md-to-html id="markdown"></md-to-html>
+<script>
+    const md = document.getElementById('markdown');
+    // 以下方法都可以设置内容
+    md.setContent('# Hello World');
+    md.setMarkdown('# Hello World');
+    md.render('# Hello World');
+</script>
 ```
 
 ### 动态内容

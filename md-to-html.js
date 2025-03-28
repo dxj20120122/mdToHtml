@@ -131,6 +131,10 @@ const markdownStyles = `
 `;
 
 class MarkdownElement extends HTMLElement {
+    static get observedAttributes() {
+        return ['content', 'markdown', 'md'];
+    }
+
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
@@ -181,12 +185,33 @@ class MarkdownElement extends HTMLElement {
         }
     }
 
+    attributeChangedCallback(name, oldValue, newValue) {
+        if (oldValue !== newValue) {
+            this.updateContent();
+        }
+    }
+
     updateContent() {
-        const markdown = this.getAttribute('content') || this.textContent.trim();
+        const markdown = this.getAttribute('content') || 
+                        this.getAttribute('markdown') || 
+                        this.getAttribute('md') || 
+                        this.textContent.trim();
         const html = convertMarkdownToHtml(markdown);
         if (this.contentDiv.innerHTML !== html) {
             this.contentDiv.innerHTML = html;
         }
+    }
+
+    setContent(markdown) {
+        this.setAttribute('content', markdown);
+    }
+
+    setMarkdown(markdown) {
+        this.setAttribute('markdown', markdown);
+    }
+
+    render(markdown) {
+        this.setAttribute('content', markdown);
     }
 }
 
