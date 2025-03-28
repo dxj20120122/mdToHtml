@@ -123,6 +123,8 @@ const markdownStyles = `
         font-size: 85%;
         background-color: #f6f8fa;
         border-radius: 6px;
+        unicode-bidi: plaintext;
+        white-space: pre;
     }
     pre code {
         padding: 0;
@@ -138,7 +140,7 @@ class MarkdownElement extends HTMLElement {
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
-        
+
         const style = document.createElement('style');
         style.textContent = markdownStyles;
         this.shadowRoot.appendChild(style);
@@ -164,7 +166,7 @@ class MarkdownElement extends HTMLElement {
     }
 
     setupObserver() {
-        this.observer.observe(this, { 
+        this.observer.observe(this, {
             childList: true,
             characterData: true,
             subtree: true,
@@ -192,10 +194,10 @@ class MarkdownElement extends HTMLElement {
     }
 
     updateContent() {
-        const markdown = this.getAttribute('content') || 
-                        this.getAttribute('markdown') || 
-                        this.getAttribute('md') || 
-                        this.textContent.trim();
+        const markdown = this.getAttribute('content') ||
+            this.getAttribute('markdown') ||
+            this.getAttribute('md') ||
+            this.textContent.trim();
         const html = convertMarkdownToHtml(markdown);
         if (this.contentDiv.innerHTML !== html) {
             this.contentDiv.innerHTML = html;

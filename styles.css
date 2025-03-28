@@ -246,6 +246,11 @@ body {
     color: #476582;
 }
 
+code {
+    unicode-bidi: plaintext;  /* 强制所有内容作为纯文本处理 */
+    white-space: pre;        /* 保留空格和换行 */
+  }
+
 @media (max-width: 768px) {
     .demo-container {
         grid-template-columns: 1fr;
