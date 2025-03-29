@@ -532,24 +532,25 @@ const markdownStyles = `
         overflow: auto;
         font-size: 85%;
         line-height: 1.45;
-        background-color: #f6f8fa;
         border-radius: 6px;
         background: #000 !important;
+        color: #ffffff;
     }
     code {
         padding: 0.2em 0.4em;
         margin: 0;
         font-size: 85%;
-        background-color: #f6f8fa;
         border-radius: 6px;
         unicode-bidi: plaintext;
         white-space: pre;
         background: #000 !important;
+        color: #ffffff;
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
     }
     pre code {
         padding: 0;
         background-color: transparent;
+        color: #ffffff;
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
     }
 `;
