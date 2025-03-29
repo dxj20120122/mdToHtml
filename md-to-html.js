@@ -530,8 +530,8 @@ const markdownStyles = `
     pre {
         padding: 16px;
         overflow: auto;
-        font-size: 85%;
-        line-height: 1.45;
+        font-size: 120%;
+        line-height: 1.25;
         border-radius: 6px;
         background: #000 !important;
         color: #ffffff;
@@ -539,7 +539,7 @@ const markdownStyles = `
     code {
         padding: 0.2em 0.4em;
         margin: 0;
-        font-size: 85%;
+        font-size: 120%;
         border-radius: 6px;
         unicode-bidi: plaintext;
         white-space: pre;
