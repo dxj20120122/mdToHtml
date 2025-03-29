@@ -142,6 +142,45 @@ const styles = `
     background: linear-gradient(to right, var(--border-color), var(--primary-color), var(--border-color));
     margin: 2em 0;
 }
+
+/* 数学公式样式 */
+.katex-display {
+    display: block;
+    margin: 1em 0;
+    overflow-x: auto;
+}
+.katex {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+/* 流程图和甘特图样式 */
+.mermaid {
+    margin: 1em 0;
+    text-align: center;
+}
+
+/* 任务列表样式 */
+.task-list-item {
+    list-style-type: none;
+    margin-left: -1.5em;
+}
+.task-list-item input {
+    margin-right: 0.5em;
+}
+
+/* 脚注样式 */
+.footnotes {
+    font-size: 0.9em;
+    color: #666;
+    border-top: 1px solid #eee;
+    margin-top: 2em;
+    padding-top: 1em;
+}
+.footnote-ref {
+    font-size: 0.8em;
+    vertical-align: super;
+}
 `;
 
 // 创建并注入样式
@@ -160,53 +199,43 @@ if (document.readyState === 'loading') {
 
 function convertMarkdownToHtml(markdown) {
     if (!markdown) return '';
-    markdown = markdown.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-
-    // 支持数学公式
-    const mathBlocks = [];
-    markdown = markdown.replace(/\$\$([\s\S]*?)\$\$/g, (match, formula) => {
-        mathBlocks.push({type: 'display', formula: formula.trim()});
-        return `__MATH_BLOCK_${mathBlocks.length - 1}__`;
-    });
-    markdown = markdown.replace(/\$([^\$\n]+?)\$/g, (match, formula) => {
-        mathBlocks.push({type: 'inline', formula: formula.trim()});
-        return `__MATH_BLOCK_${mathBlocks.length - 1}__`;
-    });
-
-    // 支持流程图和甘特图
-    const mermaidBlocks = [];
-    markdown = markdown.replace(/```mermaid([\s\S]*?)```/g, (match, code) => {
-        mermaidBlocks.push(code.trim());
-        return `__MERMAID_BLOCK_${mermaidBlocks.length - 1}__`;
-    });
-
-    const codeBlocks = [];
-    let lastIndex = 0;
-    const codeBlockRegex = /```([^\n]*)\n([\s\S]*?)```(?!`)/g;
     
-    while (true) {
-        const match = codeBlockRegex.exec(markdown);
-        if (!match) break;
-        
-        // 检查是否在已处理的代码块内
-        let isNested = false;
-        for (let i = 0; i < codeBlocks.length; i++) {
-            const blockPos = markdown.indexOf(`__CODE_BLOCK_${i}__`);
-            if (blockPos !== -1 && match.index > blockPos && 
-                match.index < blockPos + `__CODE_BLOCK_${i}__`.length) {
-                isNested = true;
-                break;
-            }
-        }
-        
-        if (!isNested) {
-            const [fullMatch, lang, code] = match;
+    try {
+        // 统一换行符
+        markdown = markdown.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
+        // 支持数学公式
+        const mathBlocks = [];
+        markdown = markdown.replace(/\$\$([\s\S]*?)\$\$/g, (match, formula) => {
+            mathBlocks.push({type: 'display', formula: formula.trim()});
+            return `__MATH_BLOCK_${mathBlocks.length - 1}__`;
+        });
+        markdown = markdown.replace(/\$([^\$\n]+?)\$/g, (match, formula) => {
+            mathBlocks.push({type: 'inline', formula: formula.trim()});
+            return `__MATH_BLOCK_${mathBlocks.length - 1}__`;
+        });
+
+        // 支持流程图和甘特图
+        const mermaidBlocks = [];
+        markdown = markdown.replace(/```mermaid([\s\S]*?)```/g, (match, code) => {
+            mermaidBlocks.push(code.trim());
+            return `__MERMAID_BLOCK_${mermaidBlocks.length - 1}__`;
+        });
+
+        // 处理代码块
+        const codeBlocks = [];
+        markdown = markdown.replace(/```([a-z]*)\s*([\s\S]*?)```/g, (match, lang, code) => {
+            // 转义代码中的特殊字符
+            const escapedCode = code.replace(/&/g, '&amp;')
+                                  .replace(/</g, '&lt;')
+                                  .replace(/>/g, '&gt;')
+                                  .replace(/`/g, '&#96;');
             
-            // 检测并处理缩进
-            const lines = code.split('\n');
+            // 处理缩进
+            const lines = escapedCode.split('\n');
             let minIndent = Infinity;
             
-            // 计算最小缩进
+            // 计算最小缩进（忽略空行）
             for (const line of lines) {
                 if (line.trim().length > 0) {
                     const indent = line.match(/^\s*/)[0].length;
@@ -214,346 +243,204 @@ function convertMarkdownToHtml(markdown) {
                 }
             }
             
-            // 如果存在公共缩进，则去除
-            let processedCode = code;
-            if (minIndent < Infinity && minIndent > 0) {
+            // 统一去除缩进
+            let processedCode = escapedCode;
+            if (minIndent > 0 && minIndent < Infinity) {
                 processedCode = lines.map(line => {
                     return line.length >= minIndent ? line.slice(minIndent) : line;
                 }).join('\n');
             }
             
-            // 确保代码块内容是顶格的
-            const trimmedCode = processedCode.trimEnd();
-            const safeCode = trimmedCode
-                .replace(/[<>]/g, c => c === '<' ? '&lt;' : '&gt;')
-                .replace(/[\[\]\*_~`#\$\^\|\{\}\(\)\+\-\.\!\@\%\&\=\:\;\'\"\,\/\\]/g, c => `&#${c.charCodeAt(0)};`);
-            codeBlocks.push({lang: lang.trim(), code: safeCode});
-            const replacement = `__CODE_BLOCK_${codeBlocks.length - 1}__`;
-            markdown = markdown.slice(0, match.index) + replacement + 
-                      markdown.slice(match.index + fullMatch.length);
-            codeBlockRegex.lastIndex = match.index + replacement.length;
-        }
-    }
+            // 保留原始换行
+            processedCode = processedCode.trimEnd();
+            
+            codeBlocks.push({
+                lang: lang ? lang.trim() : '',
+                code: processedCode
+            });
+            return `__CODE_BLOCK_${codeBlocks.length - 1}__`;
+        });
 
-    markdown = markdown.replace(/`([^`]+)`/g, (match, code) => {
-        const safeCode = code.replace(/[<>]/g, c => c === '<' ? '&lt;' : '&gt;');
-        return `<code>${safeCode}</code>`;
-    });
+        // 处理行内代码
+        markdown = markdown.replace(/`([^`]+)`/g, (match, code) => {
+            return `<code>${code.replace(/&/g, '&amp;')
+                               .replace(/</g, '&lt;')
+                               .replace(/>/g, '&gt;')}</code>`;
+        });
 
-    markdown = markdown.replace(/(?<!__CODE_BLOCK_\d+__)\n/g, '<br>\n');
+        // 处理换行
+        markdown = markdown.replace(/(?<!\n)\n(?!\n)/g, '<br>');
 
-    const escapedChars = [];
-    markdown = markdown.replace(/\\([\\`*_{}\[\]()#+\-.!n])/g, (match, char) => {
-        if (char === 'n') {
-            return '<br>';
-        }
-        escapedChars.push(char);
-        return `__ESCAPED_CHAR_${escapedChars.length - 1}__`;
-    });
+        const escapedChars = [];
+        markdown = markdown.replace(/\\([\\`*_{}\[\]()#+\-.!n])/g, (match, char) => {
+            if (char === 'n') {
+                return '<br>';
+            }
+            escapedChars.push(char);
+            return `__ESCAPED_CHAR_${escapedChars.length - 1}__`;
+        });
 
-    const htmlTags = [];
-    markdown = markdown.replace(/<[^>]+>/g, (match) => {
-        if (match.startsWith('</') || match.startsWith('<br') || match.startsWith('<hr')) {
+        const htmlTags = [];
+        markdown = markdown.replace(/<([a-z][a-z0-9]*)([^>]*)>([\s\S]*?)<\/\1>/g, (match, tag, attrs, content) => {
+            if (['script', 'style', 'iframe'].includes(tag.toLowerCase())) {
+                return match;
+            }
             htmlTags.push(match);
             return `__HTML_TAG_${htmlTags.length - 1}__`;
-        }
-        return match.replace(/[<>]/g, c => c === '<' ? '&lt;' : '&gt;');
-    });
-
-    markdown = markdown.replace(/__CODE_BLOCK_(\d+)__/g, (match, index) => {
-        const codeBlock = codeBlocks[parseInt(index)];
-        return `<pre><code${codeBlock.lang ? ` class="language-${codeBlock.lang}"` : ''}>${codeBlock.code}</code></pre>`;
-    });
-
-    markdown = markdown.replace(/`([^`]+)`/g, '<code>$1</code>');
-    let tables = [];
-    markdown = markdown.replace(/^(\|[^\n]+\|\s*\n)(\|[-:\|\s]+\|\s*\n)?(\|[^\n]+\|\s*\n?)*$/gm, (match) => {
-        tables.push(match);
-        return `__TABLE_${tables.length - 1}__`;
-    });
-
-    markdown = markdown.replace(/__TABLE_(\d+)__/g, (match, index) => {
-        const tableContent = tables[parseInt(index)];
-        const rows = tableContent.trim().split('\n');
-        const headerRow = rows[0];
-        const alignRow = rows[1];
-        const dataRows = rows.slice(alignRow ? 2 : 1);
-
-        const alignments = alignRow
-            ? alignRow.split('|').slice(1, -1).map(cell => {
-                cell = cell.trim();
-                return cell.startsWith(':') && cell.endsWith(':') ? 'center'
-                     : cell.endsWith(':') ? 'right'
-                     : cell.startsWith(':') ? 'left'
-                     : '';
-            })
-            : [];
-
-        const header = headerRow
-            .split('|')
-            .slice(1, -1)
-            .map((cell, i) => `<th${alignments[i] ? ` style="text-align: ${alignments[i]}"` : ''}>${cell.trim()}</th>`)
-            .join('');
-
-        const body = dataRows
-            .map(row => {
-                const cells = row
-                    .split('|')
-                    .slice(1, -1)
-                    .map((cell, i) => `<td${alignments[i] ? ` style="text-align: ${alignments[i]}"` : ''}>${cell.trim()}</td>`)
-                    .join('');
-                return `<tr>${cells}</tr>`;
-            })
-            .join('');
-
-        return `<table><thead><tr>${header}</tr></thead><tbody>${body}</tbody></table>`;
-    });
-    markdown = markdown.replace(/^#\s+([^\n]+?)\s*$/gm, '<h1>$1</h1>');
-    markdown = markdown.replace(/^##\s+([^\n]+?)\s*$/gm, '<h2>$1</h2>');
-    markdown = markdown.replace(/^###\s+([^\n]+?)\s*$/gm, '<h3>$1</h3>');
-    markdown = markdown.replace(/^####\s+([^\n]+?)\s*$/gm, '<h4>$1</h4>');
-    markdown = markdown.replace(/^#####\s+([^\n]+?)\s*$/gm, '<h5>$1</h5>');
-    markdown = markdown.replace(/^######\s+([^\n]+?)\s*$/gm, '<h6>$1</h6>');
-    let lists = [];
-    markdown = markdown.replace(/(?:^[-*+]\s+.+$\n?)+/gm, (match) => {
-        lists.push({type: 'ul', content: match});
-        return `__LIST_${lists.length - 1}__`;
-    });
-
-    markdown = markdown.replace(/(?:^\d+\.\s+.+$\n?)+/gm, (match) => {
-        lists.push({type: 'ol', content: match});
-        return `__LIST_${lists.length - 1}__`;
-    });
-
-    markdown = markdown.replace(/__LIST_(\d+)__/g, (match, index) => {
-        const list = lists[parseInt(index)];
-        const items = list.content
-            .trim()
-            .split('\n')
-            .map(item => `<li>${item.replace(/^[-*+\d.]\s+/, '')}</li>`)
-            .join('');
-        return `<${list.type}>${items}</${list.type}>`;
-    });
-    markdown = markdown.replace(/^\[([x ])\]\s+(.+)$/gm, (match, checkbox, text) => {
-        const checked = checkbox === 'x' ? ' checked' : '';
-        return `<li class="task-list-item"><input type="checkbox"${checked} disabled>${text}</li>`;
-    });
-    markdown = markdown.replace(/^>\s+(.+)$/gm, '<blockquote>$1</blockquote>');
-    markdown = markdown.replace(/!\[([^\]]*)\]\(([^\)]+)\)/g, '<img src="$2" alt="$1">');
-    markdown = markdown.replace(/\[([^\]]*)\]\(([^\)]+)\)/g, '<a href="$2">$1</a>');
-    markdown = markdown.replace(/^[-*_]{3,}$/gm, '<hr>');
-    markdown = markdown.replace(/~~(.+?)~~/g, '<del>$1</del>');
-    markdown = markdown.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-    markdown = markdown.replace(/\*(.+?)\*/g, '<em>$1</em>');
-    // 支持表格标题行
-    markdown = markdown.replace(/^\|([:-]+\|)+\s*$/gm, (match) => {
-        const cells = match.split('|').slice(1, -1).map(cell => cell.trim());
-        return `<tr>${cells.map(cell => {
-            const align = cell.startsWith(':') && cell.endsWith(':') ? 'center'
-                       : cell.endsWith(':') ? 'right'
-                       : cell.startsWith(':') ? 'left'
-                       : '';
-            return `<th style="text-align: ${align}">${'　'}</th>`;
-        }).join('')}</tr>`;
-    });
-
-    // 支持音频和视频标签
-    markdown = markdown.replace(/!\[audio\]\(([^\)]+)\)/g, '<audio controls src="$1"></audio>');
-    markdown = markdown.replace(/!\[video\]\(([^\)]+)\)/g, '<video controls src="$1"></video>');
-
-    // 支持键盘按键
-    markdown = markdown.replace(/<kbd>([^<]+)<\/kbd>/g, '<kbd>$1</kbd>');
-
-    // 支持上标和下标
-    markdown = markdown.replace(/\^([^\^\s]+)\^/g, '<sup>$1</sup>');
-    markdown = markdown.replace(/~([^~\s]+)~/g, '<sub>$1</sub>');
-
-    // 支持脚注
-    const footnotes = [];
-    markdown = markdown.replace(/\[\^([^\]]+)\]:\s*([^\n]+)/g, (match, ref, text) => {
-        footnotes.push({ref, text: text.trim()});
-        return '';
-    });
-    markdown = markdown.replace(/\[\^([^\]]+)\]/g, (match, ref) => {
-        const index = footnotes.findIndex(f => f.ref === ref) + 1;
-        if (index > 0) {
-            return `<sup class="footnote-ref"><a href="#fn${index}" id="fnref${index}">${index}</a></sup>`;
-        }
-        return match;
-    });
-
-    // 支持定义列表
-    markdown = markdown.replace(/^([^\n]+)\n:\s+([^\n]+)(?:\n(?!:))?/gm, '<dl><dt>$1</dt><dd>$2</dd></dl>');
-
-    markdown = markdown.replace(/^(?!<[htupoia]).+$/gm, '<p>$&</p>');
-
-    // 在文档末尾添加脚注
-    if (footnotes.length > 0) {
-        markdown += '\n<div class="footnotes">\n<hr>\n<ol>';
-        footnotes.forEach((footnote, index) => {
-            markdown += `\n<li id="fn${index + 1}">${footnote.text} <a href="#fnref${index + 1}">↩</a></li>`;
         });
-        markdown += '\n</ol>\n</div>';
+
+        // 处理表格
+        const tables = [];
+        markdown = markdown.replace(/^(\|[^\n]+\|\r?\n)((?:\|[-:\s|]+\|(?:\r?\n)?))?((?:\|[^\n]+\|(?:\r?\n)?)+)/gm, (match, header, divider, rows) => {
+            tables.push({header, divider, rows});
+            return `__TABLE_${tables.length - 1}__`;
+        });
+
+        // 处理标题
+        markdown = markdown.replace(/^#\s+([^\n]+?)\s*$/gm, '<h1>$1</h1>');
+        markdown = markdown.replace(/^##\s+([^\n]+?)\s*$/gm, '<h2>$1</h2>');
+        markdown = markdown.replace(/^###\s+([^\n]+?)\s*$/gm, '<h3>$1</h3>');
+        markdown = markdown.replace(/^####\s+([^\n]+?)\s*$/gm, '<h4>$1</h4>');
+        markdown = markdown.replace(/^#####\s+([^\n]+?)\s*$/gm, '<h5>$1</h5>');
+        markdown = markdown.replace(/^######\s+([^\n]+?)\s*$/gm, '<h6>$1</h6>');
+
+        // 处理列表
+        const lists = [];
+        markdown = markdown.replace(/^(?:[-*+]\s+.+(?:\n(?![-*+])\s+.+)*)(?:\n(?:[-*+]\s+.+(?:\n(?![-*+])\s+.+)*)*/gm, (match) => {
+            lists.push({type: 'ul', content: match});
+            return `__LIST_${lists.length - 1}__`;
+        });
+
+        markdown = markdown.replace(/^(?:\d+\.\s+.+(?:\n(?!\d+\.)\s+.+)*)(?:\n(?:\d+\.\s+.+(?:\n(?!\d+\.)\s+.+)*)*/gm, (match) => {
+            lists.push({type: 'ol', content: match});
+            return `__LIST_${lists.length - 1}__`;
+        });
+
+        // 处理其他元素
+        markdown = markdown.replace(/^>\s+(.+)$/gm, '<blockquote>$1</blockquote>');
+        markdown = markdown.replace(/!\[([^\]]*)\]\(([^\)]+)\)/g, '<img src="$2" alt="$1">');
+        markdown = markdown.replace(/\[([^\]]*)\]\(([^\)]+)\)/g, '<a href="$2">$1</a>');
+        markdown = markdown.replace(/^[-*_]{3,}$/gm, '<hr>');
+        markdown = markdown.replace(/~~(.+?)~~/g, '<del>$1</del>');
+        markdown = markdown.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+        markdown = markdown.replace(/\*(.+?)\*/g, '<em>$1</em>');
+        markdown = markdown.replace(/!\[audio\]\(([^\)]+)\)/g, '<audio controls src="$1"></audio>');
+        markdown = markdown.replace(/!\[video\]\(([^\)]+)\)/g, '<video controls src="$1"></video>');
+        markdown = markdown.replace(/<kbd>([^<]+)<\/kbd>/g, '<kbd>$1</kbd>');
+        markdown = markdown.replace(/\^([^\^\s]+)\^/g, '<sup>$1</sup>');
+        markdown = markdown.replace(/~([^~\s]+)~/g, '<sub>$1</sub>');
+
+        // 处理任务列表
+        markdown = markdown.replace(/^\[([x ])\]\s+(.+)$/gm, (match, checkbox, text) => {
+            const checked = checkbox === 'x' ? ' checked' : '';
+            return `<li class="task-list-item"><input type="checkbox"${checked} disabled>${text}</li>`;
+        });
+
+        // 处理脚注
+        const footnotes = [];
+        markdown = markdown.replace(/\[\^([^\]]+)\]:\s*([^\n]+)/g, (match, ref, text) => {
+            footnotes.push({ref, text: text.trim()});
+            return '';
+        });
+        markdown = markdown.replace(/\[\^([^\]]+)\]/g, (match, ref) => {
+            const index = footnotes.findIndex(f => f.ref === ref) + 1;
+            if (index > 0) {
+                return `<sup class="footnote-ref"><a href="#fn${index}" id="fnref${index}">${index}</a></sup>`;
+            }
+            return match;
+        });
+
+        // 恢复代码块
+        markdown = markdown.replace(/__CODE_BLOCK_(\d+)__/g, (match, index) => {
+            const block = codeBlocks[parseInt(index)];
+            const langClass = block.lang ? ` class="language-${block.lang}"` : '';
+            return `<pre><code${langClass}>${block.code}</code></pre>`;
+        });
+
+        // 恢复表格
+        markdown = markdown.replace(/__TABLE_(\d+)__/g, (match, index) => {
+            const table = tables[parseInt(index)];
+            const headerCells = table.header.split('|').slice(1, -1).map(cell => cell.trim());
+            const rows = table.rows.split('\n').filter(row => row.trim());
+            
+            let alignments = [];
+            if (table.divider) {
+                alignments = table.divider.split('|').slice(1, -1).map(cell => {
+                    cell = cell.trim();
+                    return cell.startsWith(':') && cell.endsWith(':') ? 'center'
+                         : cell.endsWith(':') ? 'right'
+                         : cell.startsWith(':') ? 'left'
+                         : '';
+                });
+            }
+
+            const header = headerCells.map((cell, i) => 
+                `<th${alignments[i] ? ` style="text-align: ${alignments[i]}"` : ''}>${cell}</th>`
+            ).join('');
+
+            const body = rows.map(row => {
+                const cells = row.split('|').slice(1, -1).map((cell, i) => 
+                    `<td${alignments[i] ? ` style="text-align: ${alignments[i]}"` : ''}>${cell.trim()}</td>`
+                ).join('');
+                return `<tr>${cells}</tr>`;
+            }).join('');
+
+            return `<table><thead><tr>${header}</tr></thead><tbody>${body}</tbody></table>`;
+        });
+
+        // 恢复列表
+        markdown = markdown.replace(/__LIST_(\d+)__/g, (match, index) => {
+            const list = lists[parseInt(index)];
+            const items = list.content.split('\n').filter(item => item.trim()).map(item => {
+                const text = item.replace(/^[-*+\d.]\s+/, '');
+                return `<li>${text}</li>`;
+            }).join('');
+            return `<${list.type}>${items}</${list.type}>`;
+        });
+
+        // 处理段落
+        markdown = markdown.replace(/^(?!<[a-z\/]|__|$)(.+)$/gm, (match, line) => {
+            if (line.trim()) {
+                return `<p>${line}</p>`;
+            }
+            return line;
+        });
+
+        // 恢复HTML标签
+        markdown = markdown.replace(/__HTML_TAG_(\d+)__/g, (match, index) => htmlTags[parseInt(index)]);
+
+        // 恢复转义字符
+        markdown = markdown.replace(/__ESCAPED_CHAR_(\d+)__/g, (match, index) => escapedChars[parseInt(index)]);
+
+        // 渲染数学公式
+        markdown = markdown.replace(/__MATH_BLOCK_(\d+)__/g, (match, index) => {
+            const block = mathBlocks[parseInt(index)];
+            return block.type === 'display'
+                ? `<div class="katex-display">${block.formula}</div>`
+                : `<span class="katex">${block.formula}</span>`;
+        });
+
+        // 渲染流程图和甘特图
+        markdown = markdown.replace(/__MERMAID_BLOCK_(\d+)__/g, (match, index) => {
+            const code = mermaidBlocks[parseInt(index)];
+            return `<div class="mermaid">${code}</div>`;
+        });
+
+        // 在文档末尾添加脚注
+        if (footnotes.length > 0) {
+            markdown += '\n<div class="footnotes">\n<hr>\n<ol>';
+            footnotes.forEach((footnote, index) => {
+                markdown += `\n<li id="fn${index + 1}">${footnote.text} <a href="#fnref${index + 1}">↩</a></li>`;
+            });
+            markdown += '\n</ol>\n</div>';
+        }
+
+        return markdown;
+    } catch (error) {
+        console.error('Markdown解析错误:', error);
+        return '<div class="markdown-error">Markdown解析错误</div>';
     }
-    markdown = markdown.replace(/\n\s*\n/g, '\n');
-    markdown = markdown.replace(/__HTML_TAG_(\d+)__/g, (match, index) => htmlTags[parseInt(index)]);
-    markdown = markdown.replace(/__ESCAPED_CHAR_(\d+)__/g, (match, index) => escapedChars[parseInt(index)]);
-
-    // 渲染数学公式
-    markdown = markdown.replace(/__MATH_BLOCK_(\d+)__/g, (match, index) => {
-        const block = mathBlocks[parseInt(index)];
-        return block.type === 'display'
-            ? `<div class="katex-display">${block.formula}</div>`
-            : `<span class="katex">${block.formula}</span>`;
-    });
-
-    // 渲染流程图和甘特图
-    markdown = markdown.replace(/__MERMAID_BLOCK_(\d+)__/g, (match, index) => {
-        const code = mermaidBlocks[parseInt(index)];
-        return `<div class="mermaid">${code}</div>`;
-    });
-
-    return markdown;
 }
-
-const markdownStyles = `
-    /* 数学公式样式 */
-    .katex-display {
-        display: block;
-        margin: 1em 0;
-        overflow-x: auto;
-    }
-    .katex {
-        display: inline-block;
-        vertical-align: middle;
-    }
-
-    /* 流程图和甘特图样式 */
-    .mermaid {
-        margin: 1em 0;
-        text-align: center;
-    }
-    /* 基础样式 */
-    table {
-        border-collapse: collapse;
-        width: 100%;
-        margin: 1em 0;
-    }
-    th, td {
-        border: 1px solid #ddd;
-        padding: 8px;
-        text-align: left;
-    }
-    th {
-        background-color: #f6f8fa;
-    }
-    tr:nth-child(even) {
-        background-color: #f9f9f9;
-    }
-
-    /* 音频和视频样式 */
-    audio, video {
-        width: 100%;
-        max-width: 600px;
-        margin: 1em 0;
-        border-radius: 4px;
-    }
-
-    /* 键盘按键样式 */
-    kbd {
-        background-color: #f8f9fa;
-        border: 1px solid #d1d5da;
-        border-radius: 3px;
-        box-shadow: inset 0 -1px 0 #d1d5da;
-        color: #444d56;
-        display: inline-block;
-        font-size: 0.9em;
-        line-height: 1;
-        padding: 3px 5px;
-    }
-
-    /* 上标和下标样式 */
-    sup, sub {
-        font-size: 0.75em;
-        line-height: 0;
-        position: relative;
-        vertical-align: baseline;
-    }
-    sup {
-        top: -0.5em;
-    }
-    sub {
-        bottom: -0.25em;
-    }
-    :host {
-        display: block;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-        line-height: 1.6;
-        color: #333;
-        max-width: 100%;
-        margin: 0 auto;
-        padding: 20px;
-    }
-    :host(.editor) {
-        padding: 0;
-    }
-    .preview {
-        padding: 20px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        overflow-y: auto;
-        background: white;
-    }
-    textarea {
-        width: 100%;
-        height: 100%;
-        min-height: 200px;
-        padding: 20px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        font-family: monospace;
-        resize: vertical;
-        white-space: pre-wrap;
-    }
-    h1, h2, h3, h4, h5, h6 {
-        margin-top: 24px;
-        margin-bottom: 16px;
-        font-weight: 600;
-        line-height: 1.25;
-    }
-    h1 { font-size: 2em; }
-    h2 { font-size: 1.5em; }
-    h3 { font-size: 1.25em; }
-    h4 { font-size: 1em; }
-    h5 { font-size: 0.875em; }
-    h6 { font-size: 0.85em; }
-    pre {
-        padding: 16px;
-        overflow: auto;
-        font-size: 120%;
-        line-height: 1.25;
-        border-radius: 6px;
-        background: #000 !important;
-        color: #ffffff;
-    }
-    code {
-        padding: 0.2em 0.4em;
-        margin: 0;
-        font-size: 120%;
-        border-radius: 6px;
-        unicode-bidi: plaintext;
-        white-space: pre;
-        background: #000 !important;
-        color: #ffffff;
-        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
-    }
-    pre code {
-        padding: 0;
-        background-color: transparent;
-        color: #ffffff;
-        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
-    }
-`;
 
 class MarkdownElement extends HTMLElement {
     static get observedAttributes() {
@@ -564,13 +451,8 @@ class MarkdownElement extends HTMLElement {
         super();
         this.attachShadow({ mode: 'open' });
 
-        const style = document.createElement('style');
-        style.textContent = markdownStyles;
-        this.shadowRoot.appendChild(style);
-
         this.contentDiv = document.createElement('div');
         this.contentDiv.className = 'preview';
-        this.contentDiv.style.background = '#fff';
         this.shadowRoot.appendChild(this.contentDiv);
 
         this.observer = new MutationObserver((mutations) => {
@@ -581,33 +463,15 @@ class MarkdownElement extends HTMLElement {
                 }
             }
         });
-
-        if (this.isConnected) {
-            this.setupObserver();
-            this.updateContent();
-        }
-    }
-
-    setupObserver() {
-        this.observer.observe(this, {
-            childList: true,
-            characterData: true,
-            subtree: true,
-            attributes: false
-        });
     }
 
     connectedCallback() {
-        if (this.tagName.toLowerCase() === 'md-to-html') {
-            this.setupObserver();
-            this.updateContent();
-        }
+        this.setupObserver();
+        this.updateContent();
     }
 
     disconnectedCallback() {
-        if (this.observer) {
-            this.observer.disconnect();
-        }
+        this.observer.disconnect();
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
@@ -616,15 +480,21 @@ class MarkdownElement extends HTMLElement {
         }
     }
 
+    setupObserver() {
+        this.observer.observe(this, {
+            childList: true,
+            characterData: true,
+            subtree: true
+        });
+    }
+
     updateContent() {
         const markdown = this.getAttribute('content') ||
             this.getAttribute('markdown') ||
             this.getAttribute('md') ||
             this.textContent.trim();
         const html = convertMarkdownToHtml(markdown);
-        if (this.contentDiv.innerHTML !== html) {
-            this.contentDiv.innerHTML = html;
-        }
+        this.contentDiv.innerHTML = html;
     }
 
     setContent(markdown) {
@@ -673,15 +543,13 @@ function setupMarkdownTextarea(textarea) {
     container.appendChild(textarea);
     container.appendChild(contentDiv);
 
-    textarea.addEventListener('input', () => {
+    const updatePreview = () => {
         const html = convertMarkdownToHtml(textarea.value);
-        if (contentDiv.innerHTML !== html) {
-            contentDiv.innerHTML = html;
-        }
-    });
+        contentDiv.innerHTML = html;
+    };
 
-    const html = convertMarkdownToHtml(textarea.value || '');
-    contentDiv.innerHTML = html;
+    textarea.addEventListener('input', updatePreview);
+    updatePreview();
 }
 
 customElements.define('md-to-html', MarkdownElement);
